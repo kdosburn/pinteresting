@@ -1,11 +1,3 @@
 require "pinteresting/version"
+require "pinteresting/pins"
 
-module Pinteresting
-  class Pins
-
-    def self.search(search_term)
-      puts "Searching Pinterest for #{search_term}"
-    end
-    
-  end
-end
