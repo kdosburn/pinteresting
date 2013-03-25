@@ -3,20 +3,39 @@ require 'mechanize'
 module Pinteresting
   class Pins
 
-    def self.search(search_term)
-      puts "Searching Pinterest for #{search_term}..."
+    def self.search(search_term, count=50)
+      puts "Searching Pinterest for #{count} #{search_term}..."
       a = Mechanize.new
-      parse(search_term, a)
+      retrieve_pins(search_term, a, count)
+      # parse(search_term, a, count)
+    end
+
+    def self.retrieve_pins(search_term, a, count)
+      puts "And we're hoping to get #{count} for you."
+      page_number = 1
+      
+      parsed_pages = []
+      until enough_pins?(parsed_pages, count)
+        puts "searching #{page_number} pages"
+        parsed_pages << parse(search_term, a, page_number)
+        page_number += 1
+      end
+      parsed_pages.inject(&:+)
     end
     
-    def self.parse(search_term, a)
-      page = get_search_term_page(search_term, a)
+    def self.enough_pins?(parsed_pages, count)
+      all_pins = parsed_pages.inject(&:+) || []
+      all_pins.count >= count
+    end
+
+    def self.parse(search_term, a, page_number)
+      page = get_search_term_page(search_term, a, page_number)
       pins = get_pins(page)
       parse_pins(pins)
     end
 
-    def self.get_search_term_page(search_term, a)
-      a.get("http://pinterest.com/search/pins/?q=#{search_term}")
+    def self.get_search_term_page(search_term, a, page_number)
+      a.get("http://pinterest.com/search/pins/?q=#{search_term}&page=#{page_number}")
     end
 
     def self.get_pins(page)
@@ -24,9 +43,7 @@ module Pinteresting
     end
 
     def self.parse_pins(pins)
-      pins.map do |pin|
-        parse_pin(pin)
-      end
+      pins.map {|pin| parse_pin(pin)}
     end
 
     def self.parse_pin(pin)
@@ -69,5 +86,6 @@ module Pinteresting
       pin_likes = pin.search(".//p[@class='stats colorless']/span[@class='LikesCount']").text
       pin_likes[/(\d+)/,1]
     end
+
   end
 end
