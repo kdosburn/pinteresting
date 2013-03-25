@@ -3,21 +3,20 @@ require 'mechanize'
 module Pinteresting
   class Pins
 
-    def self.search(search_term, count=50)
-      puts "Searching Pinterest for #{count} #{search_term}..."
-      a = Mechanize.new
-      retrieve_pins(search_term, a, count)
-      # parse(search_term, a, count)
+    def self.search(options) # :for, [:count=45]
+      puts "Searching Pinterest for #{options[:count]} #{options[:search_term]}..."
+      options[:count] ||= 45
+      options.merge!(:a => Mechanize.new)
+      retrieve_pins(options)
     end
 
-    def self.retrieve_pins(search_term, a, count)
-      puts "And we're hoping to get #{count} for you."
+    def self.retrieve_pins(options)
+      puts "And we're hoping to get #{options[:count]} for you."
       page_number = 1
-      
       parsed_pages = []
-      until enough_pins?(parsed_pages, count)
+      until enough_pins?(parsed_pages, options[:count])
         puts "searching #{page_number} pages"
-        parsed_pages << parse(search_term, a, page_number)
+        parsed_pages << parse(options,page_number)
         page_number += 1
       end
       parsed_pages.inject(&:+)
@@ -28,14 +27,14 @@ module Pinteresting
       all_pins.count >= count
     end
 
-    def self.parse(search_term, a, page_number)
-      page = get_search_term_page(search_term, a, page_number)
+    def self.parse(options,page_number)
+      page = get_search_term_page(options,page_number)
       pins = get_pins(page)
       parse_pins(pins)
     end
 
-    def self.get_search_term_page(search_term, a, page_number)
-      a.get("http://pinterest.com/search/pins/?q=#{search_term}&page=#{page_number}")
+    def self.get_search_term_page(options,page_number)
+      options[:a].get("http://pinterest.com/search/pins/?q=#{options[:search_term]}&page=#{page_number}")
     end
 
     def self.get_pins(page)
