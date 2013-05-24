@@ -58,8 +58,17 @@ module Pinteresting
       }
     end
 
+    # ERMAHGERD:
+    # The search results always give back a small thumb image... such as:
+    #   http://media-cache-is0.pinimg.com/236x/56/31/8f/56318fadfe347e3a458869dd43390a52.jpg
+    #
+    # After the domain, the first part is always the pixel wide followed by an 'x'. If you swap that out with
+    # "originals" you will get back the original (full size) image URL... such as:
+    #   http://media-cache-is0.pinimg.com/originals/56/31/8f/56318fadfe347e3a458869dd43390a52.jpg
     def self.parse_pin_image_url(pin)
-      pin.search(".//a[@class='PinImage ImgLink']/img/@src").text
+      image_url_parts = pin.search(".//a[@class='PinImage ImgLink']/img/@src").text.split('/')
+      image_url_parts[3] = "originals"
+      image_url_parts.join('/')
     end
 
     def self.parse_pin_repins(pin)
