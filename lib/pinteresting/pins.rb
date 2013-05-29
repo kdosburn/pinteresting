@@ -13,7 +13,7 @@ module Pinteresting
     def self.retrieve_pins(search_term, a, count)
       puts "And we're hoping to get #{count} for you."
       page_number = 1
-      
+
       parsed_pages = []
       until enough_pins?(parsed_pages, count)
         puts "searching #{page_number} pages"
@@ -22,7 +22,7 @@ module Pinteresting
       end
       parsed_pages.inject(&:+)
     end
-    
+
     def self.enough_pins?(parsed_pages, count)
       all_pins = parsed_pages.inject(&:+) || []
       all_pins.count >= count
@@ -48,17 +48,27 @@ module Pinteresting
 
     def self.parse_pin(pin)
       {
-        :image_url => parse_pin_image_url(pin), 
+        :image_url => parse_pin_image_url(pin),
         :repins => parse_pin_repins(pin),
         :pinterest_id => parse_pin_id(pin),
         :url => parse_pin_url(pin),
         :pinner => parse_pin_pinner(pin),
-        :likes => parse_pin_likes(pin)
+        :likes => parse_pin_likes(pin),
+        :description => parse_pin_description(pin)
       }
     end
 
+    # ERMAHGERD:
+    # The search results always give back a small thumb image... such as:
+    #   http://media-cache-is0.pinimg.com/236x/56/31/8f/56318fadfe347e3a458869dd43390a52.jpg
+    #
+    # After the domain, the first part is always the pixel wide followed by an 'x'. If you swap that out with
+    # "originals" you will get back the original (full size) image URL... such as:
+    #   http://media-cache-is0.pinimg.com/originals/56/31/8f/56318fadfe347e3a458869dd43390a52.jpg
     def self.parse_pin_image_url(pin)
-      pin.search(".//a[@class='PinImage ImgLink']/img/@src").text
+      image_url_parts = pin.search(".//a[@class='PinImage ImgLink']/img/@src").text.split('/')
+      image_url_parts[3] = "originals"
+      image_url_parts.join('/')
     end
 
     def self.parse_pin_repins(pin)
@@ -85,6 +95,10 @@ module Pinteresting
     def self.parse_pin_likes(pin)
       pin_likes = pin.search(".//p[@class='stats colorless']/span[@class='LikesCount']").text
       pin_likes[/(\d+)/,1]
+    end
+
+    def self.parse_pin_description(pin)
+      pin.search(".//p[@class='description']").text
     end
 
   end
